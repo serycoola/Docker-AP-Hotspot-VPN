@@ -46,7 +46,7 @@ Since this container uses nmcli to set up the hotspot, you NEED to pass through
 the DBUS of the host system [-v /var/run/dbus:/var/run/dbus].
 
 
-# VPN CONFIGURATION
+## VPN CONFIGURATION
 
 In case this is not set up, OpenVPN will fail connecting and the hotspot will
 broadcast your regular network connection.
