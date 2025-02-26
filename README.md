@@ -6,7 +6,7 @@ docker image of Debian, and was developed and tested to run on ZimaOS.
 
 
 
-## Prerequisites
+## PREREQUISITES
 
 This container expects to find .ovpn files inside /etc/openvpn/configs so you
 need to make sure to bind a local folder containing your desired config files
@@ -30,7 +30,7 @@ this will not install any drivers for it.
 
 
 
-## HOTSPOT configuration
+## HOTSPOT CONFIGURATION
 
 In order to set up the hotspot function, you need to first configure the
 following environment variables:
@@ -46,7 +46,7 @@ Since this container uses nmcli to set up the hotspot, you NEED to pass through
 the DBUS of the host system [-v /var/run/dbus:/var/run/dbus].
 
 
-# VPN configuration
+# VPN CONFIGURATION
 
 In case this is not set up, OpenVPN will fail connecting and the hotspot will
 broadcast your regular network connection.
@@ -68,7 +68,7 @@ for a free option, ProtonVPN is the one I would highly recommend.
 
 
 
-## Experimental features
+## EXPERIMENTAL FEATURES
 
 If in your case the WiFi adapter is not identified in nmcli as wlan0 and your
 outbound connection is not identified as tun0, or eth0, you can manually set
@@ -85,7 +85,7 @@ containing the VPN configs, you need to specify this:
 
 
 
-## BUILD, RUN, COMPOSE
+## BUILD & RUN
 
 This container is not yet uploaded to docker hub. You need to build it first, 
 before first time use. Copy all files inside a folder on your machine, navigate
@@ -98,7 +98,37 @@ ZimaOS and configure the empty Environment Variables.
 
 
 
-## License
+## DOCKER COMPOSE
+
+	name: Hotspot VPN
+	services:
+  	hotspot_vpn:
+	    cap_add:
+	      - NET_ADMIN
+	    cpu_shares: 90
+	    command: []
+	    container_name: Hotspot-VPN
+	    environment:
+	      - AP_SSID= 
+	      - WPA2_PASS= 
+	      - VPN_CONFIG= 
+	      - VPN_USER=
+	      - VPN_PASS=
+	    image: docker-ap-vpn:latest
+	    labels:
+	      icon: https://raw.githubusercontent.com/serycoola/Docker-AP-Hotspot-VPN/refs/heads/main/LOGO.png
+	    privileged: true
+	    restart: unless-stopped
+	    volumes:
+	      - type: bind
+	        source: /DATA/path/to/OpenVPN/configs
+	        target: /etc/openvpn/configs
+	      - type: bind
+	        source: /var/run/dbus
+	        target: /var/run/dbus
+	    network_mode: host
+
+## LICENSE
 
 Implemented by Serban Ciobanu under MIT License.
 
