@@ -99,7 +99,7 @@ ZimaOS and configure the empty Environment Variables.
 
 
 ## DOCKER COMPOSE
-
+````
 name: Hotspot VPN
 services:
   hotspot_vpn:
@@ -126,7 +126,7 @@ services:
         source: /var/run/dbus
         target: /var/run/dbus
     network_mode: host
-
+````
 ## LICENSE
 
 Implemented by Serban Ciobanu under MIT License.
