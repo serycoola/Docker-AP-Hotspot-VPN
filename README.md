@@ -106,7 +106,6 @@ ZimaOS and configure the empty Environment Variables.
 	    cap_add:
 	      - NET_ADMIN
 	    cpu_shares: 90
-	    command: []
 	    container_name: Hotspot-VPN
 	    environment:
 	      - AP_SSID= 
