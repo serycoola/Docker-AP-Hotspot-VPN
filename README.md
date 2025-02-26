@@ -100,32 +100,32 @@ ZimaOS and configure the empty Environment Variables.
 
 ## DOCKER COMPOSE
 
-	name: Hotspot VPN
-	services:
-  	hotspot_vpn:
-	    cap_add:
-	      - NET_ADMIN
-	    cpu_shares: 90
-	    container_name: Hotspot-VPN
-	    environment:
-	      - AP_SSID= 
-	      - WPA2_PASS= 
-	      - VPN_CONFIG= 
-	      - VPN_USER=
-	      - VPN_PASS=
-	    image: docker-ap-vpn:latest
-	    labels:
-	      icon: https://raw.githubusercontent.com/serycoola/Docker-AP-Hotspot-VPN/refs/heads/main/LOGO.png
-	    privileged: true
-	    restart: unless-stopped
-	    volumes:
-	      - type: bind
-	        source: /DATA/path/to/OpenVPN/configs
-	        target: /etc/openvpn/configs
-	      - type: bind
-	        source: /var/run/dbus
-	        target: /var/run/dbus
-	    network_mode: host
+name: Hotspot VPN
+services:
+  hotspot_vpn:
+    cap_add:
+      - NET_ADMIN
+    cpu_shares: 90
+    container_name: Hotspot-VPN
+    environment:
+      - AP_SSID= 
+      - WPA2_PASS= 
+      - VPN_CONFIG= 
+      - VPN_USER=
+      - VPN_PASS=
+    image: docker-ap-vpn:latest
+    labels:
+      icon: https://raw.githubusercontent.com/serycoola/Docker-AP-Hotspot-VPN/refs/heads/main/LOGO.png
+    privileged: true
+    restart: unless-stopped
+    volumes:
+      - type: bind
+        source: /DATA/path/to/OpenVPN/configs
+        target: /etc/openvpn/configs
+      - type: bind
+        source: /var/run/dbus
+        target: /var/run/dbus
+    network_mode: host
 
 ## LICENSE
 
