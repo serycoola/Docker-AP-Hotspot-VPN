@@ -41,18 +41,35 @@ echo "$VPN_PASS" >> /etc/openvpn/auth.conf
 chmod 600 /etc/openvpn/auth.conf
 
 # Configure and connect to VPN
-openvpn --config ${VPN_FILE} --auth-nocache --auth-user-pass /etc/openvpn/auth.conf
+echo "Connecting to VPN..."
+openvpn --config ${VPN_FILE} --auth-nocache --auth-user-pass /etc/openvpn/auth.conf &
 
-
-
-# Configure and start the WiFi hotspot
-nmcli device wifi hotspot con-name HOTSPOT band $BAND ifname $INTERFACE ssid $AP_SSID password $WPA2_PASS
-
-echo "WiFi hotspot created with SSID: $AP_SSID on interface $INTERFACE"
 echo "WiFi hotspot is now connected to the following VPN config:"
 echo "$VPN_FILE"
 
 
 
+# Configure and start the WiFi hotspot
+echo "Setting up WiFi hotspot using NMCLI..."
+nmcli device wifi hotspot con-name HOTSPOT band $BAND ifname $INTERFACE ssid $AP_SSID password $WPA2_PASS
+
+echo "WiFi hotspot created with SSID: $AP_SSID on interface $INTERFACE"
+
+
+
 # Keep the container running
-tail -f /dev/null
+tail -f /dev/null &
+
+
+
+# Trap SIGTERM and STOP the HOTSPOT
+function cleanup {
+    echo "Stopping the hotspot..."
+    nmcli connection down HOTSPOT
+    nmcli connection delete HOTSPOT
+    echo "Hotspot stopped."
+}
+
+trap 'cleanup' SIGTERM
+
+wait $!
