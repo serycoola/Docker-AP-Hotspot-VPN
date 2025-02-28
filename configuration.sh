@@ -30,8 +30,6 @@ VPN_FILE=$(find $VPN_PATH -type f -name "*${VPN_CONFIG}*.ovpn" | head -n 1)
 
 if [ -z "$VPN_FILE" ]; then
   echo "VPN configuration file not found for query: $VPN_CONFIG"
-else
-  echo "Found VPN configuration: $VPN_FILE"
 fi
 
 # Write VPN credentials to auth.conf
@@ -43,6 +41,7 @@ chmod 600 /etc/openvpn/auth.conf
 # Configure and connect to VPN
 echo "Connecting to VPN..."
 openvpn --config ${VPN_FILE} --auth-nocache --auth-user-pass /etc/openvpn/auth.conf &
+sleep 5
 
 echo "WiFi hotspot is now connected to the following VPN config:"
 echo "$VPN_FILE"
