@@ -5,4 +5,4 @@ RUN apt install --no-install-recommends -y network-manager iproute2 iptables ope
 
 ADD configuration.sh /bin/configuration.sh
 
-CMD [ "/bin/configuration.sh" ]
+ENTRYPOINT [ "/bin/configuration.sh" ]
