@@ -19,8 +19,9 @@ specify your custom location [-v /folder/containing/ovpn/files:/custom/folder
 
 In case no configuration files are provided, or VPN_CONFIG finds no file in
 the VPN_PATH folder that mathces your search query, OpenVPN will fail the
-set up process and the resulting access point will simply forward your regular
-network connection, like a normal hotspot.
+set up process and the resulting access point will have no internet connection.
+In order to use this hotspot without the VPN function, you need to manually
+configure the OUTGOINGS environment variable to your ethernet interface.
 
 Like any other hotspot created in linux, this expects two different network
 adapters in order to be able to forward the internet from one [eth0, tun0] to
