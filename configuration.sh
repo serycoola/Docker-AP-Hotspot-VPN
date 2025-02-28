@@ -41,7 +41,7 @@ chmod 600 /etc/openvpn/auth.conf
 # Configure and connect to VPN
 echo "Connecting to VPN..."
 openvpn --config ${VPN_FILE} --auth-nocache --auth-user-pass /etc/openvpn/auth.conf &
-sleep 5
+sleep 10
 
 echo "WiFi hotspot is now connected to the following VPN config:"
 echo "$VPN_FILE"
