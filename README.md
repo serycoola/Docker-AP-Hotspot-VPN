@@ -88,9 +88,10 @@ containing the VPN configs, you need to specify this:
 
 ## BUILD & RUN
 
-This container is not yet uploaded to docker hub. You need to build it first, 
-before first time use. Copy all files inside a folder on your machine, navigate
-to that folder in the terminal, and run:
+This container is uploaded to docker hub under **dotblank/docker-ap-vpn**.
+
+If you want, however, to build it locally copy all files inside a folder
+on your machine, navigate to that folder in the terminal, and run:
 
 * docker build -t docker-ap-vpn .
 
@@ -114,7 +115,7 @@ services:
       - VPN_CONFIG= 
       - VPN_USER=
       - VPN_PASS=
-    image: docker-ap-vpn:latest
+    image: dotblank/docker-ap-vpn:latest
     labels:
       icon: https://raw.githubusercontent.com/serycoola/Docker-AP-Hotspot-VPN/refs/heads/main/LOGO.png
     privileged: true
