@@ -63,7 +63,7 @@ echo "Policy routing applied: Hotspot ($HOTSPOT_SUBNET) → VPN ($OUTGOINGS)"
 
 # Hotspot Setup
 echo "Setting up WiFi hotspot using NMCLI..."
-nmcli device wifi hotspot con-name HOTSPOT band $BAND ifname $INTERFACE ssid $AP_SSID password $WPA2_PASS
+nmcli device wifi hotspot con-name HOTSPOT band $BAND ifname $INTERFACE ssid $AP_SSID password $WPA2_PASS ipv4.dns "1.1.1.1 8.8.8.8"
 echo "WiFi hotspot created with SSID: $AP_SSID on $INTERFACE"
 
 
