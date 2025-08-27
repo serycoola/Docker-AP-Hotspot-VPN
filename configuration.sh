@@ -54,14 +54,9 @@ sleep 15
 
 
 # Policy Routing for Hotspot
-# Ensure "vpn" table exists
-grep -q "^100 vpn" /etc/iproute2/rt_tables || echo "100 vpn" >> /etc/iproute2/rt_tables
-
-# Add rule: hotspot subnet uses vpn table
-ip rule add from $HOTSPOT_SUBNET table vpn priority 100
-
-# Add default route in vpn table via tun0
-ip route add default dev $OUTGOINGS table vpn
+# Use numeric table 100 for VPN policy routing
+ip rule add from $HOTSPOT_SUBNET table 100 priority 100
+ip route add default dev $OUTGOINGS table 100
 
 echo "Policy routing applied: Hotspot ($HOTSPOT_SUBNET) → VPN ($OUTGOINGS)"
 
