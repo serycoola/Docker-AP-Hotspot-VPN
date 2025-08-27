@@ -21,10 +21,13 @@ VPN_PATH=${VPN_PATH:-"/etc/openvpn/configs"}
 # Enable IP forwarding
 echo 1 > /proc/sys/net/ipv4/ip_forward
 
-# Set up NAT with iptables (route WiFi traffic through tun0)
+# Use DOCKER-USER chain so we don’t collide with Docker’s own NAT
 iptables -t nat -A POSTROUTING -s $HOTSPOT_SUBNET -o $OUTGOINGS -j MASQUERADE
-iptables -A FORWARD -s $HOTSPOT_SUBNET -o $OUTGOINGS -j ACCEPT
-iptables -A FORWARD -d $HOTSPOT_SUBNET -m state --state RELATED,ESTABLISHED -j ACCEPT
+
+# Allow hotspot subnet forwarding specifically
+iptables -I DOCKER-USER -s $HOTSPOT_SUBNET -o $OUTGOINGS -j ACCEPT
+iptables -I DOCKER-USER -d $HOTSPOT_SUBNET -m state --state RELATED,ESTABLISHED -j ACCEPT
+
 
 
 # Find the first VPN configuration file that matches VPN_CONFIG
