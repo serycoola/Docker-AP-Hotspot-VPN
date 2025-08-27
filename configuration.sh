@@ -7,6 +7,9 @@ INTERFACE=${INTERFACE:-"wlan0"}
 OUTGOINGS=${OUTGOINGS:-"tun0"}
 BAND=${BAND:-"bg"}
 
+# Hotspot subnet (nmcli usually defaults to 10.42.0.0/24 for hotspots)
+HOTSPOT_SUBNET=${HOTSPOT_SUBNET:-"10.42.0.0/24"}
+
 # Environment Variables for VPN
 VPN_USER=${VPN_USER:-"vpnuser"}
 VPN_PASS=${VPN_PASS:-"vpnpass"}
@@ -19,10 +22,9 @@ VPN_PATH=${VPN_PATH:-"/etc/openvpn/configs"}
 echo 1 > /proc/sys/net/ipv4/ip_forward
 
 # Set up NAT with iptables (route WiFi traffic through tun0)
-iptables -t nat -A POSTROUTING -o $OUTGOINGS -j MASQUERADE
-iptables -A FORWARD -i $OUTGOINGS -o $INTERFACE -m state --state RELATED,ESTABLISHED -j ACCEPT
-iptables -A FORWARD -i $INTERFACE -o $OUTGOINGS -j ACCEPT
-
+iptables -t nat -A POSTROUTING -s $HOTSPOT_SUBNET -o $OUTGOINGS -j MASQUERADE
+iptables -A FORWARD -s $HOTSPOT_SUBNET -o $OUTGOINGS -j ACCEPT
+iptables -A FORWARD -d $HOTSPOT_SUBNET -m state --state RELATED,ESTABLISHED -j ACCEPT
 
 
 # Find the first VPN configuration file that matches VPN_CONFIG
