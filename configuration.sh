@@ -66,7 +66,7 @@ echo "Setting up WiFi hotspot using NMCLI..."
 nmcli device wifi hotspot con-name HOTSPOT band $BAND ifname $INTERFACE ssid $AP_SSID password $WPA2_PASS
 
 # Set DNS for hotspot clients
-nmcli connection modify HOTSPOT ipv4.method shared ipv4.dns "1.1.1.1 8.8.8.8"
+nmcli connection modify HOTSPOT ipv4.dns "1.1.1.1 8.8.8.8"
 nmcli connection up HOTSPOT
 
 echo "WiFi hotspot created with SSID: $AP_SSID on $INTERFACE"
