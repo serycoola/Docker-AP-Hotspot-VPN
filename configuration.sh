@@ -15,13 +15,29 @@ VPN_CONFIG=${VPN_CONFIG:-"default"}
 VPN_PATH=${VPN_PATH:-"/etc/openvpn/configs"}
 
 
-# Fix system resolver so NM’s dnsmasq has valid upstream DNS
-echo "nameserver 1.1.1.1" > /etc/resolv.conf
-echo "nameserver 8.8.8.8" >> /etc/resolv.conf
+
+# Ensure NetworkManager uses dnsmasq
+mkdir -p /etc/NetworkManager/dnsmasq.d
+
+# Configure upstream DNS for NM’s internal dnsmasq
+cat > /etc/NetworkManager/dnsmasq.d/hotspot.conf <<EOF
+server=1.1.1.1
+server=8.8.8.8
+EOF
+
+# Ensure NM is configured to use dnsmasq
+if ! grep -q "dns=dnsmasq" /etc/NetworkManager/NetworkManager.conf 2>/dev/null; then
+    sed -i '/^\[main\]/a dns=dnsmasq' /etc/NetworkManager/NetworkManager.conf
+fi
+
+# Restart NM so changes apply
+systemctl restart NetworkManager || service NetworkManager restart || nmcli general reload
+
 
 
 # Enable IP Forwarding
 echo 1 > /proc/sys/net/ipv4/ip_forward
+
 
 
 # iptables for NAT
@@ -48,6 +64,7 @@ openvpn --config ${VPN_FILE} \
   --auth-user-pass /etc/openvpn/auth.conf \
   --route-nopull &
 sleep 15
+
 
 
 # Policy Routing: only hotspot subnet → VPN
