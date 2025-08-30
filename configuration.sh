@@ -1,6 +1,7 @@
 #!/bin/bash
+set -e
 
-# Environment Variables
+# Configuration Variables
 AP_SSID=${AP_SSID:-"VPN-HOTSPOT"}
 WPA2_PASS=${WPA2_PASS:-"password"}
 INTERFACE=${INTERFACE:-"wlan0"}
@@ -15,38 +16,50 @@ VPN_CONFIG=${VPN_CONFIG:-"default"}
 VPN_PATH=${VPN_PATH:-"/etc/openvpn/configs"}
 
 
+# Functions
+cleanup() {
+    echo "Stopping hotspot..."
+    nmcli connection down HOTSPOT 2>/dev/null || true
+    nmcli connection delete HOTSPOT 2>/dev/null || true
 
-# Ensure NetworkManager uses dnsmasq
-mkdir -p /etc/NetworkManager/dnsmasq.d
+    echo "Removing ip rules and routes..."
+    ip rule del from $HOTSPOT_SUBNET table 100 || true
+    ip route flush table 100 || true
 
-# Configure upstream DNS for NM’s internal dnsmasq
-cat > /etc/NetworkManager/dnsmasq.d/hotspot.conf <<EOF
-server=1.1.1.1
-server=8.8.8.8
-EOF
+    echo "Flushing iptables..."
+    iptables -t nat -F
+    iptables -F
 
-# Ensure NM is configured to use dnsmasq
-if ! grep -q "dns=dnsmasq" /etc/NetworkManager/NetworkManager.conf 2>/dev/null; then
-    sed -i '/^\[main\]/a dns=dnsmasq' /etc/NetworkManager/NetworkManager.conf
-fi
+    echo "Stopping dnsmasq..."
+    pkill dnsmasq 2>/dev/null || true
 
-# Restart NM so changes apply
-systemctl restart NetworkManager || service NetworkManager restart || nmcli general reload
+    echo "Cleanup done."
+}
+trap cleanup EXIT SIGTERM SIGINT
 
 
-
-# Enable IP Forwarding
+# Enable IP forwarding
 echo 1 > /proc/sys/net/ipv4/ip_forward
 
 
+# Start dnsmasq for DHCP + DNS
+cat > /etc/dnsmasq-hotspot.conf <<EOF
+interface=$INTERFACE
+dhcp-range=10.42.0.10,10.42.0.250,255.255.255.0,12h
+dhcp-option=option:dns-server,1.1.1.1,8.8.8.8
+bind-interfaces
+EOF
 
-# iptables for NAT
+dnsmasq --conf-file=/etc/dnsmasq-hotspot.conf
+
+
+# iptables NAT only for hotspot → VPN
 iptables -t nat -A POSTROUTING -s $HOTSPOT_SUBNET -o $OUTGOINGS -j MASQUERADE
 iptables -A FORWARD -s $HOTSPOT_SUBNET -o $OUTGOINGS -j ACCEPT
 iptables -A FORWARD -d $HOTSPOT_SUBNET -m state --state RELATED,ESTABLISHED -j ACCEPT
 
 
-# OpenVPN Setup
+# Start OpenVPN
 VPN_FILE=$(find $VPN_PATH -type f -name "*${VPN_CONFIG}*.ovpn" | head -n 1)
 if [ -z "$VPN_FILE" ]; then
   echo "VPN configuration file not found for query: $VPN_CONFIG"
@@ -58,38 +71,24 @@ echo "$VPN_USER" > /etc/openvpn/auth.conf
 echo "$VPN_PASS" >> /etc/openvpn/auth.conf
 chmod 600 /etc/openvpn/auth.conf
 
-echo "Connecting to VPN..."
-openvpn --config ${VPN_FILE} \
+echo "Starting OpenVPN..."
+openvpn --config "$VPN_FILE" \
   --auth-nocache \
   --auth-user-pass /etc/openvpn/auth.conf \
   --route-nopull &
+VPN_PID=$!
 sleep 15
 
 
-
-# Policy Routing: only hotspot subnet → VPN
+# Policy routing: hotspot subnet → VPN
 ip rule add from $HOTSPOT_SUBNET table 100 priority 100
 ip route add default dev $OUTGOINGS table 100
 
 
-# Start Hotspot
-echo "Setting up WiFi hotspot using NMCLI..."
+# Start WiFi Hotspot via NetworkManager
 nmcli device wifi hotspot con-name HOTSPOT band $BAND ifname $INTERFACE ssid $AP_SSID password $WPA2_PASS
-echo "WiFi hotspot created with SSID: $AP_SSID on interface $INTERFACE"
+echo "Hotspot $AP_SSID started on interface $INTERFACE"
 
 
-
-# Keep Alive
-tail -f /dev/null &
-
-function cleanup {
-    echo "Stopping the hotspot..."
-    nmcli connection down HOTSPOT
-    nmcli connection delete HOTSPOT
-    ip rule del from $HOTSPOT_SUBNET table 100
-    ip route flush table 100
-    echo "Hotspot stopped."
-}
-trap 'cleanup' SIGTERM
-
-wait $!
+# Keep container running
+wait $VPN_PID
