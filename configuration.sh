@@ -44,21 +44,19 @@ echo "$VPN_PASS" >> /etc/openvpn/auth.conf
 chmod 600 /etc/openvpn/auth.conf
 
 echo "Connecting to VPN..."
-openvpn --config ${VPN_FILE} --auth-nocache --auth-user-pass /etc/openvpn/auth.conf &
+openvpn --config ${VPN_FILE} \
+  --auth-nocache \
+  --auth-user-pass /etc/openvpn/auth.conf \
+  --route-nopull &
 
 # Give VPN time to establish
 sleep 15
 
 
 # Policy Routing for Hotspot
-# Ensure "vpn" table exists
-grep -q "^100 vpn" /etc/iproute2/rt_tables || echo "100 vpn" >> /etc/iproute2/rt_tables
-
-# Add rule: hotspot subnet uses vpn table
-ip rule add from $HOTSPOT_SUBNET table vpn priority 100
-
-# Add default route in vpn table via tun0
-ip route add default dev $OUTGOINGS table vpn
+# Use numeric table 100 for VPN policy routing
+ip rule add from $HOTSPOT_SUBNET table 100 priority 100
+ip route add default dev $OUTGOINGS table 100
 
 echo "Policy routing applied: Hotspot ($HOTSPOT_SUBNET) → VPN ($OUTGOINGS)"
 
@@ -66,6 +64,7 @@ echo "Policy routing applied: Hotspot ($HOTSPOT_SUBNET) → VPN ($OUTGOINGS)"
 # Hotspot Setup
 echo "Setting up WiFi hotspot using NMCLI..."
 nmcli device wifi hotspot con-name HOTSPOT band $BAND ifname $INTERFACE ssid $AP_SSID password $WPA2_PASS
+
 echo "WiFi hotspot created with SSID: $AP_SSID on $INTERFACE"
 
 
