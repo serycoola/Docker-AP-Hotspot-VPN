@@ -76,6 +76,7 @@ HOSTAPD_PID=$!
 mkdir -p /etc/NetworkManager/dnsmasq.d/
 cat > /etc/NetworkManager/dnsmasq.d/hotspot.conf <<EOF
 interface=$INTERFACE
+bind-interfaces
 dhcp-range=10.42.0.10,10.42.0.50,255.255.255.0,12h
 dhcp-option=6,1.1.1.1,8.8.8.8
 EOF
