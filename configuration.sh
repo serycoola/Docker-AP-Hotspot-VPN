@@ -5,7 +5,9 @@ AP_SSID=${AP_SSID:-"VPN-HOTSPOT"}
 WPA2_PASS=${WPA2_PASS:-"password"}
 INTERFACE=${INTERFACE:-"wlan0"}
 OUTGOINGS=${OUTGOINGS:-"tun0"}
+
 HOTSPOT_SUBNET=${HOTSPOT_SUBNET:-"10.42.0.0/24"}
+
 VPN_USER=${VPN_USER:-"vpnuser"}
 VPN_PASS=${VPN_PASS:-"vpnpass"}
 VPN_CONFIG=${VPN_CONFIG:-"default"}
@@ -14,10 +16,11 @@ VPN_PATH=${VPN_PATH:-"/etc/openvpn/configs"}
 # === Enable IP Forwarding ===
 echo 1 > /proc/sys/net/ipv4/ip_forward
 
-# === Ensure NM uses dnsmasq ===
-if ! grep -q "dns=dnsmasq" /etc/NetworkManager/NetworkManager.conf 2>/dev/null; then
-    sed -i '/^\[main\]/a dns=dnsmasq' /etc/NetworkManager/NetworkManager.conf
-fi
+# === Start NetworkManager manually (no systemd) ===
+echo "Starting NetworkManager..."
+NetworkManager --no-daemon &
+NM_PID=$!
+sleep 5  # let it initialize
 
 # === NM dnsmasq upstream DNS (resolves via VPN) ===
 mkdir -p /etc/NetworkManager/dnsmasq.d
@@ -26,9 +29,10 @@ server=1.1.1.1
 server=8.8.8.8
 EOF
 
-# Restart NetworkManager to apply
-systemctl restart NetworkManager
-sleep 3
+# === iptables NAT for VPN ===
+iptables -t nat -A POSTROUTING -s $HOTSPOT_SUBNET -o $OUTGOINGS -j MASQUERADE
+iptables -A FORWARD -s $HOTSPOT_SUBNET -o $OUTGOINGS -j ACCEPT
+iptables -A FORWARD -d $HOTSPOT_SUBNET -m state --state RELATED,ESTABLISHED -j ACCEPT
 
 # === OpenVPN Setup ===
 VPN_FILE=$(find $VPN_PATH -type f -name "*${VPN_CONFIG}*.ovpn" | head -n 1)
@@ -49,22 +53,15 @@ openvpn --config "${VPN_FILE}" \
   --route-nopull &
 
 VPN_PID=$!
-sleep 15  # wait for VPN to connect
+sleep 15  # wait for VPN connection
 
 # === Policy Routing: hotspot subnet → VPN ===
 ip rule add from $HOTSPOT_SUBNET table 100 priority 100
 ip route add default dev $OUTGOINGS table 100
 
-# === iptables NAT for VPN ===
-iptables -t nat -A POSTROUTING -s $HOTSPOT_SUBNET -o $OUTGOINGS -j MASQUERADE
-iptables -A FORWARD -s $HOTSPOT_SUBNET -o $OUTGOINGS -j ACCEPT
-iptables -A FORWARD -d $HOTSPOT_SUBNET -m state --state RELATED,ESTABLISHED -j ACCEPT
-
 # === Start NM Hotspot ===
 echo "Creating hotspot..."
 nmcli device wifi hotspot con-name HOTSPOT band bg ifname $INTERFACE ssid $AP_SSID password $WPA2_PASS
-
-# Clients will get DNS 10.42.0.1 which now resolves via the VPN
 
 # === Keep script alive ===
 tail -f /dev/null &
@@ -78,7 +75,7 @@ function cleanup {
     ip rule del from $HOTSPOT_SUBNET table 100
     ip route flush table 100
 
-    kill $VPN_PID 2>/dev/null || true
+    kill $VPN_PID $NM_PID 2>/dev/null || true
     echo "Hotspot stopped."
 }
 trap 'cleanup' SIGTERM SIGINT
