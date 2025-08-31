@@ -68,6 +68,14 @@ iptables -A FORWARD -s $HOTSPOT_SUBNET -o $OUT_CONN -j ACCEPT
 iptables -A FORWARD -d $HOTSPOT_SUBNET -m state --state RELATED,ESTABLISHED -j ACCEPT
 
 
+# Set interface up and check AP mode
+ip link set "$INTERFACE" down
+iw dev "$INTERFACE" set type __ap || true
+ip addr flush dev "$INTERFACE"
+ip addr add 10.42.0.1/24 dev "$INTERFACE"
+ip link set "$INTERFACE" up
+
+
 # Configure and start the WiFi hotspot
 mkdir -p /etc/hostapd
 cat > /etc/hostapd/hotspot.conf <<EOF
@@ -76,18 +84,16 @@ driver=nl80211
 ssid=$AP_SSID
 hw_mode=g
 channel=6
+ieee80211n=1
 wmm_enabled=1
-macaddr_acl=0
 auth_algs=1
 ignore_broadcast_ssid=0
 wpa=2
-wpa_passphrase=$WPA2_PASS
 wpa_key_mgmt=WPA-PSK
 rsn_pairwise=CCMP
+wpa_passphrase=$WPA2_PASS
+max_num_sta=10
 EOF
-
-ip addr add 10.42.0.1/24 dev $INTERFACE
-ip link set $INTERFACE up
 
 hostapd /etc/hostapd/hotspot.conf &
 HOSTAPD_PID=$!
@@ -119,11 +125,11 @@ function cleanup {
     kill $HOSTAPD_PID $DNSMASQ_PID 2>/dev/null || true
     if [ "$VPN_ENABLED" -eq 1 ]; then
         kill $VPN_PID 2>/dev/null || true
-        ip rule del from $HOTSPOT_SUBNET table 100
-        ip route flush table 100
+        ip rule del from $HOTSPOT_SUBNET table 100 || true
+        ip route flush table 100 || true
     fi
     echo "Hotspot stopped."
 }
-trap 'cleanup' SIGTERM
+trap 'cleanup' SIGTERM SIGINT
 
 wait $!
