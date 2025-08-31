@@ -19,16 +19,19 @@ VPN_PATH=${VPN_PATH:-"/etc/openvpn/configs"}
 # Enable IP Forwarding
 echo 1 > /proc/sys/net/ipv4/ip_forward
 
-# Start dnsmasq for hotspot
+# Ensure NM uses dnsmasq
+if ! grep -q "dns=dnsmasq" /etc/NetworkManager/NetworkManager.conf 2>/dev/null; then
+    sed -i '/^\[main\]/a dns=dnsmasq' /etc/NetworkManager/NetworkManager.conf
+fi
+
+# Set upstream DNS
 mkdir -p /etc/NetworkManager/dnsmasq.d
 cat > /etc/NetworkManager/dnsmasq.d/hotspot.conf <<EOF
-interface=$INTERFACE
-dhcp-range=10.42.0.10,10.42.0.250,255.255.255.0,12h
-dhcp-option=option:dns-server,1.1.1.1,8.8.8.8
-bind-interfaces
+server=1.1.1.1
+server=8.8.8.8
 EOF
 
-dnsmasq --conf-file=/etc/NetworkManager/dnsmasq.d/hotspot.conf
+systemctl restart NetworkManager || service NetworkManager restart || nmcli general reload
 
 # iptables for NAT
 iptables -t nat -A POSTROUTING -s $HOTSPOT_SUBNET -o $OUTGOINGS -j MASQUERADE
