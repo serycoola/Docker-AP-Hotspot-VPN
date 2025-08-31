@@ -47,10 +47,7 @@ echo "$VPN_PASS" >> /etc/openvpn/auth.conf
 chmod 600 /etc/openvpn/auth.conf
 
 echo "Connecting to VPN..."
-openvpn --config "${VPN_FILE}" \
-  --auth-nocache \
-  --auth-user-pass /etc/openvpn/auth.conf \
-  --route-nopull &
+openvpn --config "${VPN_FILE}" --auth-nocache --auth-user-pass /etc/openvpn/auth.conf &
 
 VPN_PID=$!
 sleep 15  # wait for VPN connection
