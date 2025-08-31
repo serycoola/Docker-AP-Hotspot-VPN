@@ -19,19 +19,6 @@ VPN_PATH=${VPN_PATH:-"/etc/openvpn/configs"}
 # Enable IP Forwarding
 echo 1 > /proc/sys/net/ipv4/ip_forward
 
-# Ensure NM uses dnsmasq
-if ! grep -q "dns=dnsmasq" /etc/NetworkManager/NetworkManager.conf 2>/dev/null; then
-    sed -i '/^\[main\]/a dns=dnsmasq' /etc/NetworkManager/NetworkManager.conf
-fi
-
-# Set upstream DNS
-mkdir -p /etc/NetworkManager/dnsmasq.d
-cat > /etc/NetworkManager/dnsmasq.d/hotspot.conf <<EOF
-server=1.1.1.1
-server=8.8.8.8
-EOF
-
-service NetworkManager restart
 
 # iptables for NAT
 iptables -t nat -A POSTROUTING -s $HOTSPOT_SUBNET -o $OUTGOINGS -j MASQUERADE
@@ -70,6 +57,9 @@ echo "Setting up WiFi hotspot using NMCLI..."
 nmcli device wifi hotspot con-name HOTSPOT band $BAND ifname $INTERFACE ssid $AP_SSID password $WPA2_PASS
 echo "WiFi hotspot created with SSID: $AP_SSID on interface $INTERFACE"
 
+# Set correct DNS for the hotspot connection
+nmcli connection modify HOTSPOT ipv4.method shared ipv4.dns "1.1.1.1"
+nmcli connection up HOTSPOT
 
 
 # Keep Alive
