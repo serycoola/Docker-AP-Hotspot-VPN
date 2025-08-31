@@ -31,7 +31,7 @@ server=1.1.1.1
 server=8.8.8.8
 EOF
 
-systemctl restart NetworkManager || service NetworkManager restart || nmcli general reload
+service NetworkManager restart
 
 # iptables for NAT
 iptables -t nat -A POSTROUTING -s $HOTSPOT_SUBNET -o $OUTGOINGS -j MASQUERADE
