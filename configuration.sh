@@ -26,6 +26,7 @@ dhcp-range=10.42.0.10,10.42.0.250,255.255.255.0,12h
 dhcp-option=option:dns-server,1.1.1.1,8.8.8.8
 bind-interfaces
 EOF
+chmod 644 /etc/dnsmasq-hotspot.conf
 
 dnsmasq --conf-file=/etc/dnsmasq-hotspot.conf
 
