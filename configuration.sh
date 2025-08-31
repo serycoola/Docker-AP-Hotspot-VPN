@@ -52,7 +52,8 @@ iptables -A FORWARD -s $HOTSPOT_SUBNET -o $OUTGOINGS -j ACCEPT
 iptables -A FORWARD -d $HOTSPOT_SUBNET -m state --state RELATED,ESTABLISHED -j ACCEPT
 
 # Start Hostapd
-cat > /tmp/hostapd.conf <<EOF
+mkdir -p /etc/hostapd
+cat > /etc/hostapd/hotspot.conf <<EOF
 interface=$INTERFACE
 driver=nl80211
 ssid=$AP_SSID
@@ -68,17 +69,18 @@ wpa_key_mgmt=WPA-PSK
 rsn_pairwise=CCMP
 EOF
 
-hostapd /tmp/hostapd.conf &
+hostapd /etc/hostapd/hotspot.conf &
 HOSTAPD_PID=$!
 
 # Start Dnsmasq
-cat > /tmp/dnsmasq-hotspot.conf <<EOF
+mkdir -p /etc/dnsmasq
+cat > /etc/dnsmasq/hotspot.conf <<EOF
 interface=$INTERFACE
 dhcp-range=10.42.0.10,10.42.0.50,255.255.255.0,12h
 dhcp-option=6,1.1.1.1,8.8.8.8
 EOF
 
-dnsmasq -C /tmp/dnsmasq-hotspot.conf &
+dnsmasq -C /etc/dnsmasq/hotspot.conf &
 DNSMASQ_PID=$!
 
 
