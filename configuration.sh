@@ -73,14 +73,14 @@ hostapd /etc/hostapd/hotspot.conf &
 HOSTAPD_PID=$!
 
 # Start Dnsmasq
-mkdir -p /etc/dnsmasq
-cat > /etc/dnsmasq/hotspot.conf <<EOF
+mkdir -p /etc/NetworkManager/dnsmasq.d/
+cat > /etc/NetworkManager/dnsmasq.d/hotspot.conf <<EOF
 interface=$INTERFACE
 dhcp-range=10.42.0.10,10.42.0.50,255.255.255.0,12h
 dhcp-option=6,1.1.1.1,8.8.8.8
 EOF
 
-dnsmasq -C /etc/dnsmasq/hotspot.conf &
+dnsmasq --conf-file=/etc/NetworkManager/dnsmasq.d/hotspot.conf &
 DNSMASQ_PID=$!
 
 
