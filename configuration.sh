@@ -69,8 +69,12 @@ wpa_key_mgmt=WPA-PSK
 rsn_pairwise=CCMP
 EOF
 
+ip addr add 10.42.0.1/24 dev $INTERFACE
+ip link set $INTERFACE up
+
 hostapd /etc/hostapd/hotspot.conf &
 HOSTAPD_PID=$!
+sleep 5
 
 # Start Dnsmasq
 mkdir -p /etc/NetworkManager/dnsmasq.d/
