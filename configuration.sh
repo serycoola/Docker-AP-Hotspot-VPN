@@ -20,15 +20,15 @@ VPN_PATH=${VPN_PATH:-"/etc/openvpn/configs"}
 echo 1 > /proc/sys/net/ipv4/ip_forward
 
 # Start dnsmasq for hotspot
-cat > /etc/dnsmasq-hotspot.conf <<EOF
+mkdir -p /etc/NetworkManager/dnsmasq.d
+cat > /etc/NetworkManager/dnsmasq.d/hotspot.conf <<EOF
 interface=$INTERFACE
 dhcp-range=10.42.0.10,10.42.0.250,255.255.255.0,12h
 dhcp-option=option:dns-server,1.1.1.1,8.8.8.8
 bind-interfaces
 EOF
-chmod 644 /etc/dnsmasq-hotspot.conf
 
-dnsmasq --conf-file=/etc/dnsmasq-hotspot.conf
+dnsmasq --conf-file=/etc/NetworkManager/dnsmasq.d/hotspot.conf
 
 # iptables for NAT
 iptables -t nat -A POSTROUTING -s $HOTSPOT_SUBNET -o $OUTGOINGS -j MASQUERADE
