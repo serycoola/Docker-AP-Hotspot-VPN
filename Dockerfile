@@ -3,6 +3,6 @@ FROM debian
 RUN apt update && apt upgrade -y
 RUN apt install --no-install-recommends -y iproute2 iptables openvpn dnsmasq hostapd network-manager
 
-COPY --chmod=755 hostapd_script.sh /bin/hostapd_script.sh
+COPY --chmod=755 hostapd_script.sh /bin/configuration.sh
 
 ENTRYPOINT [ "/bin/configuration.sh" ]
