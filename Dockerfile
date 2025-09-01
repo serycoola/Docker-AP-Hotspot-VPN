@@ -1,4 +1,4 @@
-FROM debian
+FROM debian:bookworm-slim
 
 RUN apt update && apt upgrade -y
 RUN apt install --no-install-recommends -y iproute2 iptables openvpn dnsmasq hostapd network-manager
