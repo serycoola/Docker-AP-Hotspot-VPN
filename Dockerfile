@@ -5,4 +5,4 @@ RUN apt install --no-install-recommends -y iproute2 iptables openvpn dnsmasq hos
 
 COPY --chmod=755 hostapd_script.sh /bin/hostapd_script.sh
 
-ENTRYPOINT [ "/bin/hostapd_script.sh" ]
+ENTRYPOINT [ "/bin/configuration.sh" ]
